@@ -1,0 +1,97 @@
+import pygame
+import random
+
+# Inicialização do Pygame
+pygame.init()
+
+# Configurações da janela
+largura = 400
+altura = 600
+tela = pygame.display.set_mode((largura, altura))
+pygame.display.set_caption("Jogo Simples")
+
+# Cores
+branco = (255, 255, 255)
+preto = (0, 0, 0)
+vermelho = (255, 0, 0)
+
+# Variáveis do jogo
+passaro_x = 50
+passaro_y = 300
+passaro_velocidade = 0
+passaro_gravidade = 0.3
+jogo_ativo = True
+pontuacao = 0
+
+
+# Barreiras (tubos)
+tubo_largura = 50
+tubo_espaco = 200
+tubo_x = largura
+tubos = []
+
+#Velocidade dos tubos
+tubo_velocidade = 3
+
+def criar_tubo():
+    tubo_superior_y = random.randrange(50, altura - 150)
+    tubo_inferior_y = tubo_superior_y + tubo_espaco
+    return [
+        {'x': largura, 'y': tubo_superior_y, 'passou': False},
+        {'x': largura, 'y': tubo_inferior_y, 'passou': False}
+    ]
+
+tubos.extend(criar_tubo())
+
+
+# Função principal do jogo
+def jogo():
+    global jogo_ativo, pontuacao, tubos
+
+    while jogo_ativo:
+        for evento in pygame.event.get():
+            if evento.type == pygame.QUIT:
+                jogo_ativo = False
+            if evento.type == pygame.KEYDOWN and evento.key == pygame.K_SPACE:
+                passaro_velocidade = -10
+
+        # Movimentação do pássaro
+        passaro_velocidade += passaro_gravidade
+        passaro_y += passaro_velocidade
+
+        # Constrangimentos da física (para evitar sair da tela)
+        if passaro_y > altura - 50 or passaro_y < 0:
+            jogo_ativo = False
+
+
+        #Atualização dos tubos
+        for i, tubo in enumerate(tubos):
+            tubo['x'] -= tubo_velocidade
+            if tubo['x'] < -tubo_largura:
+              tubos.pop(i)
+              tubos.append(criar_tubo())
+
+        #Detecta colisao (aqui é importante)
+        for tubo in tubos:
+            if passaro_x + 20 >= tubo['x'] and passaro_x <= tubo['x'] + tubo_largura:
+                if passaro_y <= tubo['y'] + 50 or passaro_y + 40 >= tubo['y'] + tubo_espaco:
+                    jogo_ativo = False
+
+
+        # Limpa a tela
+        tela.fill(preto)
+
+        # Desenha o pássaro (como um retângulo)
+        pygame.draw.rect(tela, vermelho, (passaro_x, passaro_y, 40, 40))
+
+        # Desenha os tubos
+        for tubo in tubos:
+            pygame.draw.rect(tela, vermelho, (tubo['x'], tubo['y'], tubo_largura, 150))
+            pygame.draw.rect(tela, vermelho, (tubo['x'], tubo['y'] + tubo_espaco, tubo_largura, 150))
+
+        pygame.display.flip()  # Atualiza a tela
+
+
+    pygame.quit()
+
+jogo()
